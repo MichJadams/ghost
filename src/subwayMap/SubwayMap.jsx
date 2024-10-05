@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import getStations from "../data/database";
 
 function SubwayMap() {
     const minLat = 40.512764
@@ -7,30 +8,31 @@ function SubwayMap() {
     const canvasWidth = 800
     const maxLat = 40.903125
     const maxLon = -73.755405
-    const stations = [
-        { name: 'Station 1', latitude: 40.775036, longitude: -73.912034 },
-        { name: 'Station 2', latitude: 40.770258, longitude: -73.917843 },
-        { name: 'Astoria-Ditmars Blvd', latitude: 40.775036, longitude: -73.912034 },
-        { name: 'Astoria Blvd', latitude: 40.770258, longitude: -73.917843 },
-        { name: '30 Av', latitude: 40.766779, longitude: -73.921479 },
-        { name: 'Broadway', latitude: 40.76182, longitude: -73.925508 },
-    ];
-    
+    const [stations, setStations] = useState([])
+
+    const fetchData = useCallback(async () => {
+        const stations = await getStations();
+        setStations(stations);
+    })
+
+
+    // { name: 'Station 1', latitude: 40.775036, longitude: -73.912034 },
     const canvasRef = useRef(null);
 
     useEffect(() => {
         const canvas = canvasRef.current;
         const ctx = canvas.getContext('2d');
+        fetchData();
 
         if (ctx) {
             ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before drawing
 
             stations.forEach(station => {
-                const { x, y } = convertCoordinatesToCanvas(station.latitude, station.longitude,);
-                drawStation(ctx, x, y, station.name);
+                const { x, y } = convertCoordinatesToCanvas(station.gtfs_latitude, station.gtfs_longitude,);
+                drawStation(ctx, x, y, station.stop_name);
             });
         }
-    }, [stations]);
+    }, [fetchData]);
 
     const convertCoordinatesToCanvas = (lat, lon) => {
         const normalizedLat = (lat - minLat) / (maxLat - minLat);
