@@ -43,10 +43,10 @@ function SubwayMap() {
 
     const drawStation = (ctx, x, y, name) => {
         ctx.beginPath();
-        ctx.arc(x, y, 5, 0, Math.PI * 2, true); // Draw a small circle for the station
+        ctx.arc(x, y, 5, 0, Math.PI * 2, true);
         ctx.fillStyle = 'blue';
         ctx.fill();
-        ctx.strokeText(name, x + 10, y); // Optional: add the station name
+        ctx.strokeText(name, x + 10, y);
         ctx.closePath();
     };
 
