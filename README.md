@@ -1,3 +1,7 @@
+# Project:  Code Name:  Ghost
+
+A cozy browser-based game where you control the spirit of a subway train.  Help your sooth your spirit by navigating to a station that fulfills its needs.
+
 # React + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
