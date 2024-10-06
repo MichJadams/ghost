@@ -11,18 +11,40 @@ function SubwayMap() {
     const [stations, setStations] = useState([])
 
     const fetchData = useCallback(async () => {
+        console.log("fetching subway data");
         const stations = await getStations();
         setStations(stations);
     })
 
-
-    // { name: 'Station 1', latitude: 40.775036, longitude: -73.912034 },
     const canvasRef = useRef(null);
 
+    const onMouseDown = (event) => {
+        console.log("mouse down", event);
+    };
+
+    const onWheel = (event) => {
+        event.preventDefault(); // prevents the whole page from scrolling
+        console.log("wheel", event);
+    }
+
+    const setupEvents = (canvas) => {
+        canvas.addEventListener("mousedown", onMouseDown);
+        canvas.addEventListener("wheel", onWheel, { passive: false });
+    }
+
+    const clearEvents = (canvas) => {
+        canvas.removeEventListener("mousedown", onMouseDown);
+        canvas.removeEventListener("wheel", onWheel, { passive: false });
+    }
+
     useEffect(() => {
+        console.log("useEffect");
         const canvas = canvasRef.current;
+        setupEvents(canvas);
+
         const ctx = canvas.getContext('2d');
         fetchData();
+        console.log(stations)
 
         if (ctx) {
             ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before drawing
@@ -32,7 +54,11 @@ function SubwayMap() {
                 drawStation(ctx, x, y, station.stop_name);
             });
         }
-    }, [fetchData]);
+
+        return () => {
+            clearEvents(canvas);
+        };
+    }, []);
 
     const convertCoordinatesToCanvas = (lat, lon) => {
         const normalizedLat = (lat - minLat) / (maxLat - minLat);
@@ -48,7 +74,7 @@ function SubwayMap() {
         ctx.arc(x, y, 5, 0, Math.PI * 2, true); // Draw a small circle for the station
         ctx.fillStyle = 'blue';
         ctx.fill();
-        ctx.strokeText(name, x + 10, y); // Optional: add the station name
+        // ctx.strokeText(name, x + 10, y); // Optional: add the station name
         ctx.closePath();
     };
 
