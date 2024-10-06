@@ -53,11 +53,18 @@ function SubwayMap() {
         return [x, y];
     }
 
+    const doSomethingWithStation = (station) => {
+        console.log("michaela fill this in", station);
+    }
+
     const onMouseDown = (event) => {
         // console.log(event);
-        if (event.button == 1) {
+        if (event.button == 0 && closestStation != null) {
+            doSomethingWithStation(closestStation);
+        } else if (event.button == 1) {
             map.drag = true;
         }
+
     };
     const onMouseUp = (event) => {
         // console.log(event);
