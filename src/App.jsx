@@ -5,7 +5,7 @@ import SubwayMap from './subwayMap/SubwayMap'
 import SelectedStation from './SelectedStation'
 import SpiritStats from './SpiritStats'
 import Spirit from './Spirit'
-import HexagonalGrid from './subwayMap/HexagonalGrid'
+
 import './App.css'
 
 function App() {
@@ -20,7 +20,6 @@ function App() {
       <Spirit />
       <SpiritStats />
       </div>
-      <HexagonalGrid row={10} col={10} />
     </>
   )
 }
