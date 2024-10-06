@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import {selectedStationByStationName} from './data/selectedStation'
-// import './SelectedStation.css'; // Optional: For styling
+import { selectedStationByStationName } from './data/selectedStation'
+import './SelectedStation.css';
 
-function SelectedStation() {
+function SelectedStation({stationName, stationComplexName}) {
     const station = {
         name: "test",
         crowded: "not crowded",
@@ -14,26 +14,29 @@ function SelectedStation() {
     const [stationData, setStationData] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [inputValue, setInputValue] = useState('');
 
-    useEffect(() => {
-        const fetchStationData = async () => {
-            try {
-                const data = await selectedStationByStationName("125th St");
-                if (data) {
-                    console.log("data", data)
-                    setStationData(data);
-                } else {
-                    setError('Failed to fetch data.');
-                }
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                console.log("this is the data", stationData)
-                setLoading(false);
+    const fetchStationData = async (stationName, stationComplexName) => {
+        try {
+            const data = await selectedStationByStationName(stationName, stationComplexName);
+            if (data) {
+                console.log("data from insidefetchStationData", data,stationName, stationComplexName )
+                setStationData(data);
+            } else {
+                setError('Failed to fetch data.');
             }
-        };
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        fetchStationData(); // Call the async function
+    const handleClick = async (event) => {
+        await fetchStationData(inputValue)
+    }
+    useEffect(() => {
+        fetchStationData(stationName, stationComplexName); // Call the async function
     }, [])
     if (!station) {
         return <div>No station selected.</div>;
@@ -49,8 +52,18 @@ function SelectedStation() {
     }
     return (
         <div className="selected-station">
+            <div>
+                For Testing:
+                <input
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    placeholder="Enter station name..."
+                />
+                <button onClick={handleClick}>Check</button>
+            </div>
             <h2>Selected Station Details</h2>
-            {loading? "nothing": stationData.hasWifi}
+            {loading ? "nothing" : stationData.hasWifi}
             <table className="station-table">
                 <tbody>
                     <tr>
@@ -59,7 +72,7 @@ function SelectedStation() {
                     </tr>
                     <tr>
                         <th>Crowded</th>
-                        <td>{crowded ? 'Yes' : 'No'}</td>
+                        <td>{stationData.totalRides ? stationData.totalRides : 'undefined'}</td>
                     </tr>
                     <tr>
                         <th>Art</th>
@@ -67,7 +80,7 @@ function SelectedStation() {
                     </tr>
                     <tr>
                         <th>WiFi</th>
-                        <td>{wifi ? 'Yes' : 'No'}</td>
+                        <td>{stationData.hasWifi ? 'Yes' : 'No'}</td>
                     </tr>
                     <tr>
                         <th>Accessible</th>
