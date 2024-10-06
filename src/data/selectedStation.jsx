@@ -1,11 +1,18 @@
 import axios from "axios";
 
-async function selectedStationByStationName(stationName, stationComplexName) {
-    const [hasWifiResult, crowdedLevelResult] = await Promise.allSettled([hasWifi(stationName), crowdedLevel("2024-09-24", "dawn", stationComplexName)])
+async function selectedStationByStationName(stationName, stationComplexId) {
+    console.log("got:", stationName)
+    console.log("stationComplexId: ", stationComplexId)
+    const [hasWifiResult, crowdedLevelResult] = await Promise.allSettled([
+        hasWifi(stationName), 
+        crowdedLevel("2024-09-24", "dawn", stationComplexId)
+    ])
+
     const result = {
         hasWifi: hasWifiResult.value,
         totalRides: crowdedLevelResult.value
     }
+    console.log("station selection information", result)
     return result
 }
 
@@ -25,9 +32,9 @@ async function hasWifi(stationName) {
     });
 }
 
-async function crowdedLevel(date, timeOfDayName, stationComplexName) {
+async function crowdedLevel(date, timeOfDayName, stationComplexId) {
     const { start, end } = convertTimeOfDayToTimeStamp(date, timeOfDayName);
-    const transitQuery = getTransitRangeQuery(stationComplexName, start, end)
+    const transitQuery = getTransitRangeQuery(stationComplexId, start, end)
     const url = `https://data.ny.gov/resource/wujg-7c2s.json?$query=${transitQuery}`
 
     return axios({
@@ -90,7 +97,7 @@ function convertTimeOfDayToTimeStamp(date, name) {
     }
 }
 
-function getTransitRangeQuery(stationComplex, startTimestamp, endTimestamp) {
+function getTransitRangeQuery(station_complex_id, startTimestamp, endTimestamp) {
     const query = `
       SELECT
         \`transit_timestamp\`,
@@ -106,7 +113,7 @@ function getTransitRangeQuery(stationComplex, startTimestamp, endTimestamp) {
         \`longitude\`,
         \`georeference\`
       WHERE
-        caseless_one_of(\`station_complex\`, "${stationComplex}")
+        caseless_one_of(\`station_complex_id\`, "${station_complex_id}")
         AND (\`transit_timestamp\`
              BETWEEN "${startTimestamp}" :: floating_timestamp
              AND "${endTimestamp}" :: floating_timestamp)
