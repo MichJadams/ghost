@@ -1,10 +1,7 @@
 import axios from "axios";
 
-async function selectedStationByStationName(stationName) {
-    const stationComplexName = "find this"
-    const stationComplexId = "also probably need this "
-    const [hasWifiResult, crowdedLevelResult] = await Promise.allSettled([hasWifi(stationName), crowdedLevel("2024-09-24", "dawn", "125 St (4,5,6)")])
-    console.log("TOTAL NUMBER OF RIDES", crowdedLevelResult)
+async function selectedStationByStationName(stationName, stationComplexName) {
+    const [hasWifiResult, crowdedLevelResult] = await Promise.allSettled([hasWifi(stationName), crowdedLevel("2024-09-24", "dawn", stationComplexName)])
     const result = {
         hasWifi: hasWifiResult.value,
         totalRides: crowdedLevelResult.value
@@ -30,7 +27,6 @@ async function hasWifi(stationName) {
 
 async function crowdedLevel(date, timeOfDayName, stationComplexName) {
     const { start, end } = convertTimeOfDayToTimeStamp(date, timeOfDayName);
-    console.log("these are the start and end times", start, end)
     const transitQuery = getTransitRangeQuery(stationComplexName, start, end)
     const url = `https://data.ny.gov/resource/wujg-7c2s.json?$query=${transitQuery}`
 
@@ -44,7 +40,7 @@ async function crowdedLevel(date, timeOfDayName, stationComplexName) {
     }).then((blob) => {
         return blob.data.reduce((acc, cur)=> acc += Number(cur.ridership), 0)
     }).catch((err)=>{
-        console.log("this is the err", err)
+        console.error("Error in crowdedLevel: ", err)
     })
 
 }
