@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import getStations from "../data/database";
+import axios from "axios";
 
 function SubwayMap() {
     const minLat = 40.512764
@@ -10,29 +11,30 @@ function SubwayMap() {
     const maxLon = -73.755405
     const [stations, setStations] = useState([])
 
-    const fetchData = useCallback(async () => {
-        const stations = await getStations();
-        setStations(stations);
-    })
-
-
     // { name: 'Station 1', latitude: 40.775036, longitude: -73.912034 },
     const canvasRef = useRef(null);
 
     useEffect(() => {
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext('2d');
-        fetchData();
-
-        if (ctx) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before drawing
-
-            stations.forEach(station => {
-                const { x, y } = convertCoordinatesToCanvas(station.gtfs_latitude, station.gtfs_longitude,);
-                drawStation(ctx, x, y, station.stop_name);
-            });
-        }
-    }, [fetchData]);
+        axios({
+            url: "https://data.ny.gov/resource/39hk-dx4f.json",
+            method: "GET",
+            data: {
+                "$limit" : 500, // there are only 496
+                // "$$app_token" : "YOURAPPTOKENHERE"
+            }
+        }).then((blob) => {            
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before drawing
+                blob.data.forEach(station => {
+                    const { x, y } = convertCoordinatesToCanvas(station.gtfs_latitude, station.gtfs_longitude,);
+                    drawStation(ctx, x, y, station.stop_name);
+                });
+            }
+            setStations(blob.data);
+        });
+    }, []);
 
     const convertCoordinatesToCanvas = (lat, lon) => {
         const normalizedLat = (lat - minLat) / (maxLat - minLat);
