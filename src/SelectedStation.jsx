@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { selectedStationByStationName } from './data/selectedStation'
 import './SelectedStation.css';
 
-function SelectedStation({stationName, stationComplexName}) {
+function SelectedStation({ stationName, stationComplexName }) {
     const station = {
         name: "test",
         crowded: "not crowded",
@@ -20,7 +20,7 @@ function SelectedStation({stationName, stationComplexName}) {
         try {
             const data = await selectedStationByStationName(stationName, stationComplexName);
             if (data) {
-                console.log("data from insidefetchStationData", data,stationName, stationComplexName )
+                console.log("data from insidefetchStationData", data, stationName, stationComplexName)
                 setStationData(data);
             } else {
                 setError('Failed to fetch data.');
@@ -37,6 +37,24 @@ function SelectedStation({stationName, stationComplexName}) {
     }
     useEffect(() => {
         fetchStationData(stationName, stationComplexName); // Call the async function
+
+        const handleHashChange = () => {
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            const selectedStationName = params.get('selectedStationName'); // "active"
+            const selectedComplexId = params.get('selectedComplexId');     // "date"
+            fetchStationData(selectedStationName, selectedComplexId); // Call the async function
+           
+        };
+
+        // Listen for hash changes
+        window.addEventListener('hashchange', handleHashChange);
+
+        // Cleanup the event listener when the component unmounts
+        return () => {
+            window.removeEventListener('hashchange', handleHashChange);
+        };
+
     }, [])
     if (!station) {
         return <div>No station selected.</div>;

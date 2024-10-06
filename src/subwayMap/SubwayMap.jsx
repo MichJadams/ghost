@@ -43,7 +43,6 @@ function SubwayMap() {
     var map = new MapMath();
     var stations = []
     var closestStation = null;
-
     const canvasRef = useRef(null);
 
     const convertClientToCanvas = (clientX, clientY, canvas) => {
@@ -55,6 +54,7 @@ function SubwayMap() {
 
     const doSomethingWithStation = (station) => {
         console.log("michaela fill this in", station);
+        window.location.hash = `selectedStationName=${station.stop_name}&selectedComplexId=${station.complex_id}`;
     }
 
     const onMouseDown = (event) => {
