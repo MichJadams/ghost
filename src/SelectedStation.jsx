@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import './SelectedStation.css'; // Optional: For styling
+//import './SelectedStation.css'; // Optional: For styling
 
 function SelectedStation ({ station }) {
   if (!station) {
