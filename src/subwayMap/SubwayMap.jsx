@@ -2,54 +2,84 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {getStations} from "../data/database";
 import axios from "axios";
 
+class MapMath {
+    constructor() {
+        this.canvasHeight = 600; // const
+        this.canvasWidth = 600; // const
+        this.scale = 500; // const
+        this.zoom =  1;
+        this.center =  { lat: 40.72, lon: -74.00 };
+        this.drag = false;
+        this.closest = null;
+    }
+
+    convertCoordinatesToCanvas(lat, lon) {
+        // normalized values will be 0, 0 if they are directly on `center`
+        const normalizedLon = (lon - this.center.lon) * this.scale
+        const normalizedLat = (lat - this.center.lat) * this.scale
+
+        const x = (this.canvasWidth / 2) + normalizedLon * 2**this.zoom;
+        const y = (this.canvasHeight / 2) - normalizedLat * 2**this.zoom; // Invert y to match canvas coordinate system
+
+        // test inverse function
+        // const [ inLat, inLon ] = convertCanvasToCoordinates(x, y, zoom, center);
+        // console.log("in", lat, lon, "out", inLat, inLon);
+
+        return { x, y };
+    }
+
+    convertCanvasToCoordinates(x, y) {
+        const normX = (x - (this.canvasWidth / 2)) / 2**this.zoom;
+        const normY = -(y - (this.canvasHeight / 2)) / 2**this.zoom;
+
+        const lon = normX / this.scale + this.center.lon;
+        const lat = normY / this.scale + this.center.lat;
+
+        return [ lat, lon ];
+    }
+}
+
 function SubwayMap() {
-    const canvasHeight = 600
-    const canvasWidth = 600
-    var canvasZoom = 1;
-    var canvasCenter = { lat: 40.72, lon: -74.00 }
-    var canvasDrag = false;
-    var canvasClosest = null;
+    var map = new MapMath();
     var stations = []
+    var closestStation = null;
 
     const canvasRef = useRef(null);
 
+    const convertClientToCanvas = (clientX, clientY, canvas) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = (clientX - rect.left) * (canvas.width / rect.width);
+        const y = (clientY - rect.top) * (canvas.height / rect.height);
+        return [x, y];
+    }
+
     const onMouseDown = (event) => {
         // console.log(event);
-        if (event.button == 0) {
-            const canvas = canvasRef.current;
-            const [x, y] = convertClientToCanvas(event.clientX, event.clientY, canvas);
-            const [lat, lon] = convertCanvasToCoordinates(x, y, canvasZoom, canvasCenter);
-            canvasCenter = {
-                lat: lat,
-                lon: lon,
-            }
-            draw();
-        } else if (event.button == 1) {
-            canvasDrag = true;
+        if (event.button == 1) {
+            map.drag = true;
         }
     };
-
     const onMouseUp = (event) => {
         // console.log(event);
         if (event.button == 1) {
-            canvasDrag = false;
+            map.drag = false;
         }
     };
 
     const onWheel = (event) => {
         event.preventDefault(); // prevents the whole page from scrolling
 
-        canvasZoom -= event.deltaY * 0.001;
+        map.zoom -= event.deltaY * 0.001;
 
         if (event.deltaY < 0) {
             // also nudge the center towards the mouse pointer a little when zooming in
             const [mouseX, mouseY] = convertClientToCanvas(event.clientX, event.clientY, canvasRef.current);
-            const [lat, lon] = convertCanvasToCoordinates(mouseX, mouseY, canvasZoom, canvasCenter);
+            const [lat, lon] = map.convertCanvasToCoordinates(mouseX, mouseY);
 
-            const dLat = lat - canvasCenter.lat;
-            const dLon = lon - canvasCenter.lon;
-            canvasCenter.lat += dLat / 10; // vibes
-            canvasCenter.lon += dLon / 10; // vibes
+            const dLat = lat - map.center.lat;
+            const dLon = lon - map.center.lon;
+            map.center.lat += dLat / 10; // vibes
+            map.center.lon += dLon / 10; // vibes
         }
 
         draw();
@@ -58,19 +88,18 @@ function SubwayMap() {
     const onMouseMove = (event) => {
         // console.log(event);
 
-        if (canvasDrag) {
+        if (map.drag) {
             // drag map
-            const baseZoom = 500; // XXX: dupliated in converCoordinatesToCanvase
             // not sure why this formula works lol I kinda just stumbled into it
-            canvasCenter.lat += event.movementY / (baseZoom * 2 * 2**canvasZoom);
-            canvasCenter.lon -= event.movementX / (baseZoom * 2 * 2**canvasZoom);
+            map.center.lat += event.movementY / (map.scale * 2 * 2**map.zoom);
+            map.center.lon -= event.movementX / (map.scale * 2 * 2**map.zoom);
             draw();
         }
 
         // update selected station
         const canvas = canvasRef.current;
         const [mouseX, mouseY] = convertClientToCanvas(event.clientX, event.clientY, canvas);
-        const [mouseLat, mouseLon] = convertCanvasToCoordinates(mouseX, mouseY, canvasZoom, canvasCenter);
+        const [mouseLat, mouseLon] = map.convertCanvasToCoordinates(mouseX, mouseY);
         var closest = null;
         var closestDist = null;
         stations.forEach(station => {
@@ -83,7 +112,7 @@ function SubwayMap() {
                 closestDist = dist;
             }
         });
-        canvasClosest = closest;
+        closestStation = closest;
         // console.log("closest", closest.stop_name);
 
         draw();
@@ -131,51 +160,17 @@ function SubwayMap() {
         if (ctx) {
             ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before drawing
             stations.forEach(station => {
-                const { x, y } = convertCoordinatesToCanvas(
+                const { x, y } = map.convertCoordinatesToCanvas(
                     Number(station.gtfs_latitude),
                     Number(station.gtfs_longitude),
-                    canvasZoom,
-                    canvasCenter,
+                    map.zoom,
+                    map.center,
                 );
-                drawStation(ctx, x, y, station.stop_name, station == canvasClosest);
+                drawStation(ctx, x, y, station.stop_name, station == closestStation);
             });
         } else {
             console.log("No canvas?");
         }
-    }
-
-    const convertCoordinatesToCanvas = (lat, lon, zoom, center) => {
-        const baseZoom = 500
-        // normalized values will be 0, 0 if they are directly on `center`
-        const normalizedLon = (lon - center.lon) * baseZoom
-        const normalizedLat = (lat - center.lat) * baseZoom
-
-        const x = (canvasWidth / 2) + normalizedLon * 2**zoom;
-        const y = (canvasHeight / 2) - normalizedLat * 2**zoom; // Invert y to match canvas coordinate system
-
-        // test inverse function
-        // const [ inLat, inLon ] = convertCanvasToCoordinates(x, y, zoom, center);
-        // console.log("in", lat, lon, "out", inLat, inLon);
-
-        return { x, y };
-    };
-
-    const convertCanvasToCoordinates = (x, y, zoom, center) => {
-        const normX = (x - (canvasWidth / 2)) / 2**zoom;
-        const normY = -(y - (canvasHeight / 2)) / 2**zoom;
-
-        const baseZoom = 500 // XXX: duplicated in convertCoordinatesToCanvas
-        const lon = normX / baseZoom + center.lon;
-        const lat = normY / baseZoom + center.lat;
-
-        return [ lat, lon ];
-    }
-
-    const convertClientToCanvas = (clientX, clientY, canvas) => {
-        const rect = canvas.getBoundingClientRect();
-        const x = (clientX - rect.left) * (canvas.width / rect.width);
-        const y = (clientY - rect.top) * (canvas.height / rect.height);
-        return [x, y];
     }
 
     const drawStation = (ctx, x, y, name, highlight) => {
@@ -187,14 +182,14 @@ function SubwayMap() {
         if (highlight) color = "red";
         ctx.fillStyle = color;
         ctx.fill();
-        if (canvasZoom > 4) {
+        if (map.zoom > 4) {
             ctx.strokeText(name, x + 10, y);
         }
         ctx.closePath();
     };
 
     return (
-        <canvas ref={canvasRef} width={canvasWidth} height={canvasHeight} style={{ border: '1px solid black' }} />
+        <canvas ref={canvasRef} width={map.canvasWidth} height={map.canvasHeight} style={{ border: '1px solid black' }} />
     )
 }
 
