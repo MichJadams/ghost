@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import getStations from "../data/database";
+import {getStations} from "../data/database";
 import axios from "axios";
 
 function SubwayMap() {
