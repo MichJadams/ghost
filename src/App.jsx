@@ -5,6 +5,8 @@ import SubwayMap from './subwayMap/SubwayMap'
 import SelectedStation from './SelectedStation'
 import SpiritStats from './SpiritStats'
 import Spirit from './Spirit'
+import './index.css'
+
 
 import './App.css'
 
@@ -16,10 +18,6 @@ function App() {
       <h1>Metrogatchi</h1>
       <SubwayMap />
       <SelectedStation stationName={'125th St'} stationComplexName={'125 St (4,5,6)'} />
-      <div className="spirit-container">
-      <Spirit />
-      <SpiritStats />
-      </div>
     </>
   )
 }

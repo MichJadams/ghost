@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { selectedStationByStationName } from './data/selectedStation'
-import './SelectedStation.css';
+import {selectedStationByStationName} from './data/selectedStation'
+import SpiritStats from './SpiritStats';
+import Spirit from './Spirit';
+// import './SelectedStation.css'; // Optional: For styling
 
 function SelectedStation({ stationName, stationComplexName }) {
     const station = {
@@ -81,11 +83,11 @@ function SelectedStation({ stationName, stationComplexName }) {
                 <button onClick={handleClick}>Check</button>
             </div>
             <h2>Selected Station Details</h2>
-            {loading ? "nothing" : stationData.hasWifi}
-            <table className="station-table">
+            {loading? "nothing": stationData.hasWifi}
+            <table className="station-table flex justify-around">
                 <tbody>
                     <tr>
-                        <th>Name</th>
+                        <th >Name</th>
                         <td>{name}</td>
                     </tr>
                     <tr>
@@ -106,6 +108,10 @@ function SelectedStation({ stationName, stationComplexName }) {
                     </tr>
                 </tbody>
             </table>
+            <div className="spirit-container bg-stone-200 flex-col items-center">
+                <Spirit />
+                <SpiritStats />
+            </div>
         </div>
     );
 };

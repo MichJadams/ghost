@@ -8,7 +8,7 @@ function SpiritStats(){
 
 
     return (
-        <div>
+        <div className='flex-col'>
             <h3>Spirit Stats</h3>
             <table>
                 <thead>
