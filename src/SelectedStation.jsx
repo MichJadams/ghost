@@ -5,7 +5,7 @@ import SpiritStats from './SpiritStats';
 import Spirit from './Spirit';
 // import './SelectedStation.css'; // Optional: For styling
 
-function SelectedStation() {
+function SelectedStation({ stationName, stationComplexName }) {
     const station = {
         name: "test",
         crowded: "not crowded",
@@ -16,26 +16,47 @@ function SelectedStation() {
     const [stationData, setStationData] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [inputValue, setInputValue] = useState('');
 
-    useEffect(() => {
-        const fetchStationData = async () => {
-            try {
-                const data = await selectedStationByStationName("125th St");
-                if (data) {
-                    console.log("data", data)
-                    setStationData(data);
-                } else {
-                    setError('Failed to fetch data.');
-                }
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                console.log("this is the data", stationData)
-                setLoading(false);
+    const fetchStationData = async (stationName, stationComplexName) => {
+        try {
+            const data = await selectedStationByStationName(stationName, stationComplexName);
+            if (data) {
+                console.log("data from insidefetchStationData", data, stationName, stationComplexName)
+                setStationData(data);
+            } else {
+                setError('Failed to fetch data.');
             }
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleClick = async (event) => {
+        await fetchStationData(inputValue)
+    }
+    useEffect(() => {
+        fetchStationData(stationName, stationComplexName); // Call the async function
+
+        const handleHashChange = () => {
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            const selectedStationName = params.get('selectedStationName'); // "active"
+            const selectedComplexId = params.get('selectedComplexId');     // "date"
+            fetchStationData(selectedStationName, selectedComplexId); // Call the async function
+           
         };
 
-        fetchStationData(); // Call the async function
+        // Listen for hash changes
+        window.addEventListener('hashchange', handleHashChange);
+
+        // Cleanup the event listener when the component unmounts
+        return () => {
+            window.removeEventListener('hashchange', handleHashChange);
+        };
+
     }, [])
     if (!station) {
         return <div>No station selected.</div>;
@@ -50,7 +71,17 @@ function SelectedStation() {
         return (<div>Error ...{error}</div>)
     }
     return (
-        <div className="selected-station bg-stone-200 flex-col">
+        <div className="selected-station">
+            <div>
+                For Testing:
+                <input
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    placeholder="Enter station name..."
+                />
+                <button onClick={handleClick}>Check</button>
+            </div>
             <h2>Selected Station Details</h2>
             {loading? "nothing": stationData.hasWifi}
             <table className="station-table flex justify-around">
@@ -61,7 +92,7 @@ function SelectedStation() {
                     </tr>
                     <tr>
                         <th>Crowded</th>
-                        <td>{crowded ? 'Yes' : 'No'}</td>
+                        <td>{stationData.totalRides ? stationData.totalRides : 'undefined'}</td>
                     </tr>
                     <tr>
                         <th>Art</th>
@@ -69,7 +100,7 @@ function SelectedStation() {
                     </tr>
                     <tr>
                         <th>WiFi</th>
-                        <td>{wifi ? 'Yes' : 'No'}</td>
+                        <td>{stationData.hasWifi ? 'Yes' : 'No'}</td>
                     </tr>
                     <tr>
                         <th>Accessible</th>

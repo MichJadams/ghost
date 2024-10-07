@@ -17,7 +17,7 @@ function App() {
     <>
       <h1>Metrogatchi</h1>
       <SubwayMap />
-      <SelectedStation />
+      <SelectedStation stationName={'125th St'} stationComplexName={'125 St (4,5,6)'} />
     </>
   )
 }
