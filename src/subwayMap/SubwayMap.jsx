@@ -53,7 +53,7 @@ function SubwayMap() {
     }
 
     const doSomethingWithStation = (station) => {
-        console.log("michaela fill this in", station);
+        console.log("michaela fill this in", station.complex_id);
         window.location.hash = `selectedStationName=${station.stop_name}&selectedComplexId=${station.complex_id}`;
     }
 
