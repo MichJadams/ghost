@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import {selectedStationByStationName} from './data/selectedStation'
+import { selectedStationByStationName } from './data/dataSelectedStation'
 import SpiritStats from './SpiritStats';
 import Spirit from './Spirit';
 // import './SelectedStation.css'; // Optional: For styling
@@ -16,14 +16,15 @@ function SelectedStation({ stationName, stationComplexName }) {
     const [stationData, setStationData] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [inputValue, setInputValue] = useState('');
+    const [selectedTime, setSelectedTime] = useState("The Darkest Hour");
 
     const fetchStationData = async (stationName, stationComplexName) => {
         try {
-            const data = await selectedStationByStationName(stationName, stationComplexName);
+            const data = await selectedStationByStationName(stationName, stationComplexName, selectedTime);
+            console.log("fetch station data: \n")
+            console.log(data.artUrls)
             if (data) {
-                console.log("data from insidefetchStationData", data, stationName, stationComplexName)
-                setStationData(data);
+                setStationData({ ...data, stationName });
             } else {
                 setError('Failed to fetch data.');
             }
@@ -34,19 +35,19 @@ function SelectedStation({ stationName, stationComplexName }) {
         }
     };
 
-    const handleClick = async (event) => {
-        await fetchStationData(inputValue)
-    }
+    const handleChange = (event) => {
+        setSelectedTime(event.target.value);
+    };
+
     useEffect(() => {
         fetchStationData(stationName, stationComplexName); // Call the async function
 
         const handleHashChange = () => {
             const hash = window.location.hash.substring(1);
             const params = new URLSearchParams(hash);
-            const selectedStationName = params.get('selectedStationName'); // "active"
-            const selectedComplexId = params.get('selectedComplexId');     // "date"
+            const selectedStationName = params.get('selectedStationName');
+            const selectedComplexId = params.get('selectedComplexId');
             fetchStationData(selectedStationName, selectedComplexId); // Call the async function
-           
         };
 
         // Listen for hash changes
@@ -62,8 +63,6 @@ function SelectedStation({ stationName, stationComplexName }) {
         return <div>No station selected.</div>;
     }
 
-    const { name, crowded, art, wifi, accessible } = station;
-
     if (loading) {
         return (<div>Loading ... </div>)
     }
@@ -72,31 +71,36 @@ function SelectedStation({ stationName, stationComplexName }) {
     }
     return (
         <div className="selected-station">
-            <div>
-                For Testing:
-                <input
-                    type="text"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    placeholder="Enter station name..."
-                />
-                <button onClick={handleClick}>Check</button>
-            </div>
+
             <h2>Selected Station Details</h2>
-            {loading? "nothing": stationData.hasWifi}
+            {loading ? "nothing" : stationData.hasWifi}
             <table className="station-table flex justify-around">
                 <tbody>
                     <tr>
                         <th >Name</th>
-                        <td>{name}</td>
+                        <td>{stationData.stationName}</td>
                     </tr>
                     <tr>
                         <th>Crowded</th>
                         <td>{stationData.totalRides ? stationData.totalRides : 'undefined'}</td>
+                        <th>
+                            <select id="timeOfDay" value={selectedTime} onChange={handleChange}>
+                                <option value="The Darkest Hour">The Darkest Hour (3am - 6am)</option>
+                                <option value="Dawn">Dawn (6am - 8am)</option>
+                                <option value="Morning">Morning (8am - 12pm)</option>
+                                <option value="Early Afternoon">Early Afternoon (12pm - 3pm)</option>
+                                <option value="Later Afternoon">Later Afternoon (3pm - 5pm)</option>
+                                <option value="Dusk">Dusk (5pm - 7pm)</option>
+                                <option value="Evening">Evening (7pm - 9pm)</option>
+                                <option value="Night">Night (9pm - 12am)</option>
+                                <option value="Late Night">Late Night (12am - 3am)</option>
+                            </select>
+                        </th>
+
                     </tr>
                     <tr>
                         <th>Art</th>
-                        <td>{art ? 'Available' : 'Not Available'}</td>
+                        <td> {"hard coded right now"}</td>
                     </tr>
                     <tr>
                         <th>WiFi</th>
@@ -104,10 +108,15 @@ function SelectedStation({ stationName, stationComplexName }) {
                     </tr>
                     <tr>
                         <th>Accessible</th>
-                        <td>{accessible ? 'Yes' : 'No'}</td>
+                        <td> {"hard coded right now"}</td>
                     </tr>
                 </tbody>
             </table>
+            <div >
+                {stationData && stationData.artUrls && stationData.artUrls.map((url, index) => (
+                    <img key={index} src={url} alt={`Image ${index + 1}`} />
+                ))}
+            </div>
             <div className="spirit-container bg-stone-200 flex-col items-center">
                 <Spirit />
                 <SpiritStats />

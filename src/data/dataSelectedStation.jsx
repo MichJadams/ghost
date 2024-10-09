@@ -1,18 +1,18 @@
 import axios from "axios";
-
-async function selectedStationByStationName(stationName, stationComplexId) {
-    console.log("got:", stationName)
-    console.log("stationComplexId: ", stationComplexId)
-    const [hasWifiResult, crowdedLevelResult] = await Promise.allSettled([
-        hasWifi(stationName), 
-        crowdedLevel("2024-09-24", "dawn", stationComplexId)
+import {findStationArtByName} from './artInstallations'
+async function selectedStationByStationName(stationName, stationComplexId, timeOfDay) {
+    const [hasWifiResult, crowdedLevelResult, artResult] = await Promise.allSettled([
+        hasWifi(stationName),
+        // at some point maybe we pick a different day
+        crowdedLevel("2024-09-24", timeOfDay, stationComplexId),
+        art(stationName)
     ])
-
     const result = {
         hasWifi: hasWifiResult.value,
-        totalRides: crowdedLevelResult.value
+        totalRides: crowdedLevelResult.value,
+        artResult: artResult.value,
+        artUrls: [artResult.value? artResult.value["Actual Image Link"]: false]
     }
-    console.log("station selection information", result)
     return result
 }
 
@@ -45,48 +45,70 @@ async function crowdedLevel(date, timeOfDayName, stationComplexId) {
             // "$$app_token" : "YOURAPPTOKENHERE"
         }
     }).then((blob) => {
-        return blob.data.reduce((acc, cur)=> acc += Number(cur.ridership), 0)
-    }).catch((err)=>{
+        return blob.data.reduce((acc, cur) => acc += Number(cur.ridership), 0)
+    }).catch((err) => {
         console.error("Error in crowdedLevel: ", err)
     })
-
 }
 
+async function art(stationName) {
+    // okay so the issue here that this returns a URL to another page with information about 
+    // the art work and a picture on there. 
+    
+    const artData = await findStationArtByName(stationName)
+    console.log(" --->", artData)
+    // const artQuery = getArtQuery(stationName)
+    // const url = `https://data.ny.gov/resource/4y8j-9pkd.json?$query=${artQuery}`
+
+    // return axios({
+    //     url: url,
+    //     method: "GET",
+    //     data: {
+    //         "$limit": 500,
+    //         // "$$app_token" : "YOURAPPTOKENHERE"
+    //     }
+    // }).then((blob) => {
+    //     return blob.data
+    // }).catch((err) => {
+    //     console.error("Error in art: ", err)
+    // })
+    return artData
+}
 function convertTimeOfDayToTimeStamp(date, name) {
     const nameToTimeStamp = {
         "The Darkest Hour": {
             start: "03:00:00",
             end: "06:00:00"
         },
-        "dawn": {
+        "Dawn": {
             start: "06:00:00",
             end: "08:00:00"
         },
-        "morning": {
+        "Morning": {
             start: "08:00:00",
             end: "12:00:00"
         },
-        "early afternoon": {
+        "Early Afternoon": {
             start: "12:00:00",
             end: "15:00:00"
         },
-        "later afternoon": {
+        "Later Afternoon": {
             start: "15:00:00",
             end: "17:00:00"
         },
-        "dusk": {
+        "Dusk": {
             start: "17:00:00",
             end: "19:00:00"
         },
-        "evening": {
+        "Evening": {
             start: "19:00:00",
             end: "21:00:00"
         },
-        "night": {
+        "Night": {
             start: "21:00:00",
             end: "00:00:00"
         },
-        "late night": {
+        "Late Night": {
             start: "00:00:00",
             end: "03:00:00"
         }
@@ -152,4 +174,20 @@ function getStationQuery(stationName) {
     return encodeURIComponent(query);
 }
 
+function getArtQuery(stationName) {
+    const query = `SELECT
+        \`agency\`,
+        \`station_name\`,
+        \`line\`,
+        \`artist\`,
+        \`art_title\`,
+        \`art_date\`,
+        \`art_material\`,
+        \`art_description\`,
+        \`art_image_link\`
+        WHERE caseless_one_of(\`station_name\`, "${stationName}")
+        `;
+
+    return encodeURIComponent(query);
+}
 export { selectedStationByStationName }
