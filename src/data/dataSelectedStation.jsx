@@ -1,5 +1,5 @@
 import axios from "axios";
-
+import {findStationArtByName} from './artInstallations'
 async function selectedStationByStationName(stationName, stationComplexId, timeOfDay) {
     const [hasWifiResult, crowdedLevelResult, artResult] = await Promise.allSettled([
         hasWifi(stationName),
@@ -10,7 +10,8 @@ async function selectedStationByStationName(stationName, stationComplexId, timeO
     const result = {
         hasWifi: hasWifiResult.value,
         totalRides: crowdedLevelResult.value,
-        artResult: artResult.value
+        artResult: artResult.value,
+        artUrls: [artResult.value? artResult.value["Actual Image Link"]: false]
     }
     return result
 }
@@ -51,21 +52,27 @@ async function crowdedLevel(date, timeOfDayName, stationComplexId) {
 }
 
 async function art(stationName) {
-    const artQuery = getArtQuery(stationName)
-    const url = `https://data.ny.gov/resource/4y8j-9pkd.json?$query=${artQuery}`
+    // okay so the issue here that this returns a URL to another page with information about 
+    // the art work and a picture on there. 
+    
+    const artData = await findStationArtByName(stationName)
+    console.log(" --->", artData)
+    // const artQuery = getArtQuery(stationName)
+    // const url = `https://data.ny.gov/resource/4y8j-9pkd.json?$query=${artQuery}`
 
-    return axios({
-        url: url,
-        method: "GET",
-        data: {
-            "$limit": 500,
-            // "$$app_token" : "YOURAPPTOKENHERE"
-        }
-    }).then((blob) => {
-        return blob.data
-    }).catch((err) => {
-        console.error("Error in art: ", err)
-    })
+    // return axios({
+    //     url: url,
+    //     method: "GET",
+    //     data: {
+    //         "$limit": 500,
+    //         // "$$app_token" : "YOURAPPTOKENHERE"
+    //     }
+    // }).then((blob) => {
+    //     return blob.data
+    // }).catch((err) => {
+    //     console.error("Error in art: ", err)
+    // })
+    return artData
 }
 function convertTimeOfDayToTimeStamp(date, name) {
     const nameToTimeStamp = {

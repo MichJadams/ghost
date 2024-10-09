@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
-import { selectedStationByStationName } from './data/selectedStation'
+import { selectedStationByStationName } from './data/dataSelectedStation'
 import SpiritStats from './SpiritStats';
 import Spirit from './Spirit';
 // import './SelectedStation.css'; // Optional: For styling
@@ -22,8 +22,7 @@ function SelectedStation({ stationName, stationComplexName }) {
         try {
             const data = await selectedStationByStationName(stationName, stationComplexName, selectedTime);
             console.log("fetch station data: \n")
-            console.log(data.artResult)
-            const test = await fetchFirstImage(data.artResult[0].art_image_link.url)
+            console.log(data.artUrls)
             if (data) {
                 setStationData({ ...data, stationName });
             } else {
@@ -64,37 +63,6 @@ function SelectedStation({ stationName, stationComplexName }) {
         return <div>No station selected.</div>;
     }
 
-    async function fetchFirstImage(url) {
-        console.log("this url", url)
-        try {
-          // Fetch the HTML from the webpage
-          const response = await fetch(url);
-          
-          if (!response.ok) {
-            throw new Error(`Failed to fetch page: ${response.status}`);
-          }
-      
-          const htmlText = await response.text();
-      
-          // Create a DOM parser to parse the HTML
-          const parser = new DOMParser();
-          const doc = parser.parseFromString(htmlText, 'text/html');
-      
-          // Find the first image tag
-          const imgTag = doc.querySelector('img');
-      
-          if (imgTag) {
-            const imgSrc = imgTag.src;
-            console.log("First image source URL:", imgSrc);
-            return imgSrc;
-          } else {
-            console.log("No image found on the page.");
-          }
-        } catch (error) {
-          console.error("Error:", error);
-        }
-      }
-      
     if (loading) {
         return (<div>Loading ... </div>)
     }
