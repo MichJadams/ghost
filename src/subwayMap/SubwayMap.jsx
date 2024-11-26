@@ -152,6 +152,7 @@ function SubwayMap() {
             }
         }).then((blob) => {            
             stations = blob.data;
+            console.log(stations)
             draw();
         });
 
